@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import asyncHandler from 'express-async-handler';
 import ShufflerGame, {
   IShufflerGame,
@@ -6,62 +6,12 @@ import ShufflerGame, {
 } from '../../models/ShufflerGame';
 import ShufflerCard from '../../models/ShufflerCard';
 import shuffle from '../../utils/shuffle';
-import {
-  Document,
-  FilterQuery,
-  MongooseError,
-  isValidObjectId,
-} from 'mongoose';
+import { MongooseError } from 'mongoose';
+import handleValidId from './game/middlewares/handleValidId';
+import extractGame from './game/utils/extractGame';
+import handleGameNotExists from './game/middlewares/handleGameNotExists';
 
 const gameRouter = express.Router();
-
-export type TShufflerGameFind =
-  | (Document<IShufflerGame> & FilterQuery<IShufflerGame>)
-  | null;
-
-declare global {
-  namespace Express {
-    interface Request {
-      game: TShufflerGameFind;
-    }
-  }
-}
-
-const handleGameNotExists = asyncHandler(async (req, res, next) => {
-  req.game = (await ShufflerGame.findById(req.params.id)) as TShufflerGameFind;
-  if (!req.game) {
-    res.status(404).json({
-      status: 404,
-      message: `Game with id '${req.params.id}' does not exist`,
-    });
-    return;
-  }
-
-  next();
-});
-
-const extractGame = ({ _id, cards, createdAt }: IShufflerGame) => ({
-  id: _id,
-  cards: cards.map(({ name, shuffled, guessed, guessedAt }) => ({
-    name,
-    shuffled,
-    guessed,
-    guessedAt,
-  })),
-  createdAt,
-});
-
-const handleValidId = (req: Request, res: Response, next: NextFunction) => {
-  if (!isValidObjectId(req.params.id)) {
-    res.status(422).json({
-      status: 422,
-      message: `Invalid id '${req.params.id}'`,
-    });
-    return;
-  }
-
-  next();
-};
 
 gameRouter.post(
   '/new',
