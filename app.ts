@@ -3,6 +3,7 @@ import errorHandler from './middlewares/errorHandler';
 import createError from 'http-errors';
 import cors from 'cors';
 import indexRouter from './routes';
+import shufflerRouter from './routes/shuffler';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // set routers
 app.use('/', indexRouter);
+app.use('/shuffler', shufflerRouter);
 app.use((req, res, next) => next(createError(500)));
 app.use(errorHandler);
 
