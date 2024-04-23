@@ -65,24 +65,25 @@ declare global {
   }
 }
 
+const handleCardNotExists = asyncHandler(async (req, res, next) => {
+  req.card = (await ShufflerCard.findOne<IShufflerCard>({
+    name: req.params.name,
+  })) as TShufflerCardFind;
+
+  if (!req.card) {
+    res.status(422).json({
+      status: 422,
+      message: `Card '${req.params.name}' does not exist`,
+    });
+    return;
+  }
+
+  next();
+});
+
 cardRouter.post(
   '/:name/update',
-  // check if this card already exists
-  asyncHandler(async (req, res, next) => {
-    req.card = (await ShufflerCard.findOne<IShufflerCard>({
-      name: req.params.name,
-    })) as TShufflerCardFind;
-
-    if (!req.card) {
-      res.status(422).json({
-        status: 422,
-        message: `Card '${req.params.name}' does not exist`,
-      });
-      return;
-    }
-
-    next();
-  }),
+  handleCardNotExists,
   nameValidations.custom(async (name) => {
     const card = await ShufflerCard.findOne({ name });
     if (card) throw new Error(`Card '${name}' already exists`);
@@ -95,6 +96,19 @@ cardRouter.post(
     res.json({
       status: 200,
       message: `Card '${req.params.name}' has been updated successfully to '${req.body.name}'!`,
+    });
+  })
+);
+
+cardRouter.delete(
+  '/:name/delete',
+  handleCardNotExists,
+  asyncHandler(async (req, res) => {
+    await req.card.deleteOne();
+
+    res.json({
+      status: 200,
+      message: `Card '${req.params.name}' has been successfully deleted`,
     });
   })
 );
