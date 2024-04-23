@@ -6,8 +6,15 @@ import ShufflerGame, {
 } from '../../models/ShufflerGame';
 import ShufflerCard from '../../models/ShufflerCard';
 import shuffle from '../../utils/shuffle';
+import { isValidObjectId } from 'mongoose';
 
 const gameRouter = express.Router();
+
+const extractGame = ({ _id, cards, createdAt }: IShufflerGame) => ({
+  id: _id,
+  cards,
+  createdAt,
+});
 
 gameRouter.post(
   '/new',
@@ -31,6 +38,36 @@ gameRouter.post(
       status: 200,
       message: 'Game cards have been updated and reshuffled!',
       gameId: game._id,
+    });
+  })
+);
+
+gameRouter.get(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    // check if valid id
+    if (!isValidObjectId(req.params.id)) {
+      res.status(422).json({
+        status: 422,
+        message: `Invalid id '${req.params.id}'`,
+      });
+      return;
+    }
+
+    // check if exists
+    const game = await ShufflerGame.findById(req.params.id);
+    if (!game) {
+      res.status(404).json({
+        status: 404,
+        message: `Game with id '${req.params.id}' does not exist`,
+      });
+      return;
+    }
+
+    res.json({
+      status: 200,
+      message: '',
+      game: extractGame(game),
     });
   })
 );
