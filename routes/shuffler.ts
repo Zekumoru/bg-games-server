@@ -1,11 +1,13 @@
 import express from 'express';
-import shufflerCardRouter from './shuffler/card';
-import shufflerCardsRouter from './shuffler/cards';
+import cardRouter from './shuffler/card';
+import cardsRouter from './shuffler/cards';
+import gameRouter from './shuffler/game';
 
 const shufflerRouter = express.Router();
 
-shufflerRouter.use('/card', shufflerCardRouter);
-shufflerRouter.use('/cards', shufflerCardsRouter);
+shufflerRouter.use('/card', cardRouter);
+shufflerRouter.use('/cards', cardsRouter);
+shufflerRouter.use('/game', gameRouter);
 
 shufflerRouter.get('/', (req, res) => {
   res.json({

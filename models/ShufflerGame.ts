@@ -5,12 +5,9 @@ interface IShufflerGameCardSchema {
   shuffled: string;
   guessed: boolean;
   guessedAt: Date | null;
-  createdAt: Date;
 }
 
-export interface IShufflerGameCard extends IShufflerGameCardSchema {
-  _id: Types.ObjectId;
-}
+export interface IShufflerGameCard extends IShufflerGameCardSchema {}
 
 const ShufflerGameCardSchema = new Schema<IShufflerGameCardSchema>({
   name: {
@@ -34,10 +31,26 @@ const ShufflerGameCardSchema = new Schema<IShufflerGameCardSchema>({
     type: Date,
     default: null,
   },
+});
+
+interface IShufflerGameSchema {
+  cards: IShufflerGameCard[];
+  createdAt: Date;
+}
+
+export interface IShufflerGame extends IShufflerGameSchema {
+  _id: Types.ObjectId;
+}
+
+const ShufflerGameSchema = new Schema<IShufflerGameSchema>({
+  cards: {
+    type: [ShufflerGameCardSchema],
+    default: [],
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-export default model('ShufflerGameCard', ShufflerGameCardSchema);
+export default model('ShufflerGame', ShufflerGameSchema);
