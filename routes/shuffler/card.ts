@@ -1,9 +1,14 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import asyncHandler from 'express-async-handler';
-import ShufflerCard from '../../models/ShufflerCard';
+import ShufflerCard, { IShufflerCard } from '../../models/ShufflerCard';
 
 const cardRouter = express.Router();
+
+const extractCard = ({ name, createdAt }: IShufflerCard) => ({
+  name,
+  createdAt,
+});
 
 const nameValidations = body('name')
   .trim()
@@ -39,6 +44,30 @@ cardRouter.post(
     res.status(201).json({
       status: 201,
       message: `Card '${card.name}' has been created successfully!`,
+      card: extractCard(card),
+    });
+  })
+);
+
+cardRouter.get(
+  '/:name',
+  asyncHandler(async (req, res) => {
+    const card = await ShufflerCard.findOne<IShufflerCard>({
+      name: req.params.name,
+    });
+
+    if (!card) {
+      res.status(404).json({
+        status: 404,
+        message: `Card '${req.params.name}' does not exist`,
+      });
+      return;
+    }
+
+    res.json({
+      status: 200,
+      message: '',
+      card: extractCard(card),
     });
   })
 );
