@@ -31,8 +31,8 @@ gameRouter.post(
     const game = new ShufflerGame({ cards: shuffledCards });
     await game.save();
 
-    res.json({
-      status: 200,
+    res.status(201).json({
+      status: 201,
       message: 'Game cards have been updated and reshuffled!',
       gameId: game._id,
     });
