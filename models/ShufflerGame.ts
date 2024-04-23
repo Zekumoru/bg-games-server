@@ -29,6 +29,7 @@ const ShufflerGameCardSchema = new Schema<IShufflerGameCardSchema>({
   },
   guessedAt: {
     type: Date,
+    required: true,
     default: null,
   },
 });
@@ -46,10 +47,12 @@ const ShufflerGameSchema = new Schema<IShufflerGameSchema>({
   cards: {
     type: [ShufflerGameCardSchema],
     default: [],
+    required: true,
   },
   createdAt: {
     type: Date,
     default: Date.now,
+    required: true,
   },
 });
 

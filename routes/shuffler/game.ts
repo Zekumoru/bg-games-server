@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import ShufflerGame, {
   IShufflerGame,
@@ -6,15 +6,62 @@ import ShufflerGame, {
 } from '../../models/ShufflerGame';
 import ShufflerCard from '../../models/ShufflerCard';
 import shuffle from '../../utils/shuffle';
-import { isValidObjectId } from 'mongoose';
+import {
+  Document,
+  FilterQuery,
+  MongooseError,
+  isValidObjectId,
+} from 'mongoose';
 
 const gameRouter = express.Router();
 
+export type TShufflerGameFind =
+  | (Document<IShufflerGame> & FilterQuery<IShufflerGame>)
+  | null;
+
+declare global {
+  namespace Express {
+    interface Request {
+      game: TShufflerGameFind;
+    }
+  }
+}
+
+const handleGameNotExists = asyncHandler(async (req, res, next) => {
+  req.game = (await ShufflerGame.findById(req.params.id)) as TShufflerGameFind;
+  if (!req.game) {
+    res.status(404).json({
+      status: 404,
+      message: `Game with id '${req.params.id}' does not exist`,
+    });
+    return;
+  }
+
+  next();
+});
+
 const extractGame = ({ _id, cards, createdAt }: IShufflerGame) => ({
   id: _id,
-  cards,
+  cards: cards.map(({ name, shuffled, guessed, guessedAt }) => ({
+    name,
+    shuffled,
+    guessed,
+    guessedAt,
+  })),
   createdAt,
 });
+
+const handleValidId = (req: Request, res: Response, next: NextFunction) => {
+  if (!isValidObjectId(req.params.id)) {
+    res.status(422).json({
+      status: 422,
+      message: `Invalid id '${req.params.id}'`,
+    });
+    return;
+  }
+
+  next();
+};
 
 gameRouter.post(
   '/new',
@@ -42,32 +89,44 @@ gameRouter.post(
   })
 );
 
-gameRouter.get(
-  '/:id',
+gameRouter.post(
+  '/:id/update',
+  handleValidId,
+  handleGameNotExists,
   asyncHandler(async (req, res) => {
-    // check if valid id
-    if (!isValidObjectId(req.params.id)) {
-      res.status(422).json({
-        status: 422,
-        message: `Invalid id '${req.params.id}'`,
-      });
-      return;
-    }
+    const data = req.body as IShufflerGame;
 
-    // check if exists
-    const game = await ShufflerGame.findById(req.params.id);
-    if (!game) {
-      res.status(404).json({
-        status: 404,
-        message: `Game with id '${req.params.id}' does not exist`,
-      });
+    try {
+      req.game?.overwrite(data);
+      await req.game?.save();
+    } catch (error) {
+      if (error instanceof MongooseError) {
+        res.status(422).json({
+          status: 422,
+          message: error.message,
+        });
+      } else {
+        throw error;
+      }
       return;
     }
 
     res.json({
       status: 200,
+      message: `Game with id '${req.params.id}' has been successfully updated!`,
+    });
+  })
+);
+
+gameRouter.get(
+  '/:id',
+  handleValidId,
+  handleGameNotExists,
+  asyncHandler(async (req, res) => {
+    res.json({
+      status: 200,
       message: '',
-      game: extractGame(game),
+      game: extractGame(req.game as IShufflerGame),
     });
   })
 );
