@@ -24,12 +24,10 @@ const ShufflerGameCardSchema = new Schema<IShufflerGameCardSchema>({
   },
   guessed: {
     type: Boolean,
-    required: true,
     default: false,
   },
   guessedAt: {
     type: Date,
-    required: true,
     default: null,
   },
 });
