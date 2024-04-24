@@ -20,12 +20,14 @@ gameRouter.post(
     const cards = await ShufflerCard.find({});
 
     // 2. shuffle cards to their respective shuffled property
-    const shuffledCards: IShufflerGameCard[] = cards.map(({ name }) => ({
-      name,
-      shuffled: shuffle(name.split('')).join(''),
-      guessed: false,
-      guessedAt: null,
-    }));
+    const shuffledCards: IShufflerGameCard[] = shuffle(
+      cards.map(({ name }) => ({
+        name,
+        shuffled: shuffle(name.split('')).join(''),
+        guessed: false,
+        guessedAt: null,
+      }))
+    );
 
     // 3. save these shuffled game cards
     const game = new ShufflerGame({ cards: shuffledCards });
